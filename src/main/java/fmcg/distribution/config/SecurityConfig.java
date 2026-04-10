@@ -37,6 +37,9 @@ public class SecurityConfig {
     @Value("${cors.allowed.origins}")
     private String allowedOrigins;
 
+    @Value("${cors.allowed.origin.patterns:}")
+    private String allowedOriginPatterns;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -80,6 +83,15 @@ public class SecurityConfig {
                 .collect(Collectors.toList());
 
         configuration.setAllowedOrigins(origins);
+
+        // Support wildcard patterns (e.g. https://*.lovable.app) for dynamic preview URLs
+        if (allowedOriginPatterns != null && !allowedOriginPatterns.isBlank()) {
+            List<String> patterns = Arrays.stream(allowedOriginPatterns.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            configuration.setAllowedOriginPatterns(patterns);
+        }
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
