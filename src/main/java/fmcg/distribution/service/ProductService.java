@@ -71,7 +71,7 @@ public class ProductService {
         product.setImageUrl(imageUrl);
         productRepository.save(product);
 
-        return imageUrl;
+        return "https://fmcg-app-production.up.railway.app/api/files/" + imageUrl;
     }
 
     @Transactional
