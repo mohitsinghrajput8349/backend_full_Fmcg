@@ -93,24 +93,3 @@ public class ProductController {
     }
 }
 
-@RestController
-@RequestMapping("/files")
-class FileController {
-
-    @Autowired
-    private StorageService storageService;
-
-    @GetMapping("/{path}/**")
-    public ResponseEntity<byte[]> getFile(@PathVariable String path, @RequestParam(required = false) String auth) {
-        try {
-            // Extract full path from request
-            String fullPath = path; // Simplified - would need proper path extraction
-            byte[] fileData = storageService.getFile(fullPath);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG)
-                    .body(fileData);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-}
