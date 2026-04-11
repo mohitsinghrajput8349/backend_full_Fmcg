@@ -15,13 +15,15 @@ public class FileController {
     @Autowired
     private StorageService storageService;
 
-  @GetMapping("/**")
+@GetMapping("/**")
 public ResponseEntity<byte[]> getFile(HttpServletRequest request) {
     try {
-        String requestURI = request.getRequestURI();
+        String uri = request.getRequestURI();
 
-        // Extract everything after /api/files/
-        String fullPath = requestURI.substring(requestURI.indexOf("/api/files/") + 11);
+        // Extract correct path AFTER /api/files/
+        String fullPath = uri.substring(uri.indexOf("/api/files/") + "/api/files/".length());
+
+        System.out.println("FULL PATH: " + fullPath); // 🔥 debug
 
         byte[] fileData = storageService.getFile(fullPath);
 
@@ -34,6 +36,7 @@ public ResponseEntity<byte[]> getFile(HttpServletRequest request) {
                 .body(fileData);
 
     } catch (Exception e) {
+        e.printStackTrace(); // 🔥 VERY IMPORTANT
         return ResponseEntity.internalServerError().build();
     }
 }
