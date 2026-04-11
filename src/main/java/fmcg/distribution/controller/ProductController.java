@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import java.util.HashMap;
@@ -100,17 +101,29 @@ class FileController {
     @Autowired
     private StorageService storageService;
 
-    @GetMapping("/{path}/**")
-    public ResponseEntity<byte[]> getFile(@PathVariable String path, @RequestParam(required = false) String auth) {
+    @GetMapping("/**")
+    public ResponseEntity<byte[]> getFile(HttpServletRequest request) {
         try {
-            // Extract full path from request
-            String fullPath = path; // Simplified - would need proper path extraction
+            String fullPath = request.getRequestURI()
+                    .substring(request.getContextPath().length())
+                    .replaceFirst("/api/files/", "");
             byte[] fileData = storageService.getFile(fullPath);
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG)
+                    .contentType(getContentType(fullPath))
                     .body(fileData);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    private MediaType getContentType(String path) {
+        if (path == null) return MediaType.APPLICATION_OCTET_STREAM;
+        String lower = path.toLowerCase();
+        if (lower.endsWith(".png"))  return MediaType.IMAGE_PNG;
+        if (lower.endsWith(".gif"))  return MediaType.IMAGE_GIF;
+        if (lower.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
+        if (lower.endsWith(".svg"))  return MediaType.parseMediaType("image/svg+xml");
+        if (lower.endsWith(".pdf"))  return MediaType.APPLICATION_PDF;
+        return MediaType.IMAGE_JPEG; // default for .jpg / .jpeg and unknown types
     }
 }
