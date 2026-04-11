@@ -22,33 +22,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+  @Override
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain chain)
+        throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
+    String path = request.getRequestURI();
 
-        String email = null;
-        String jwt = null;
-
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            try {
-                email = jwtUtil.extractUsername(jwt);
-            } catch (Exception e) {
-                logger.error("JWT extraction error: " + e.getMessage());
-            }
-        }
-
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
+    // ✅ SKIP JWT FOR PUBLIC ENDPOINTS
+    if (path.startsWith("/api/auth") || path.startsWith("/api/files")) {
         chain.doFilter(request, response);
+        return;
     }
+
+    final String authorizationHeader = request.getHeader("Authorization");
+
+    String email = null;
+    String jwt = null;
+
+    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        jwt = authorizationHeader.substring(7);
+        try {
+            email = jwtUtil.extractUsername(jwt);
+        } catch (Exception e) {
+            logger.error("JWT extraction error: " + e.getMessage());
+        }
+    }
+
+    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        if (jwtUtil.validateToken(jwt, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    chain.doFilter(request, response);
+}
 }
