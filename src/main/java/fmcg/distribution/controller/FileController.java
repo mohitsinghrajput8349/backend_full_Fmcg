@@ -15,27 +15,28 @@ public class FileController {
     @Autowired
     private StorageService storageService;
 
-    @GetMapping("/**")
-    public ResponseEntity<byte[]> getFile(HttpServletRequest request) {
-        try {
-            String fullPath = request.getRequestURI()
-                    .substring(request.getContextPath().length())
-                    .replaceFirst("/api/files/", "");
+  @GetMapping("/**")
+public ResponseEntity<byte[]> getFile(HttpServletRequest request) {
+    try {
+        String requestURI = request.getRequestURI();
 
-            byte[] fileData = storageService.getFile(fullPath);
+        // Extract everything after /api/files/
+        String fullPath = requestURI.substring(requestURI.indexOf("/api/files/") + 11);
 
-            if (fileData == null || fileData.length == 0) {
-                return ResponseEntity.notFound().build();
-            }
+        byte[] fileData = storageService.getFile(fullPath);
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, getContentType(fullPath))
-                    .body(fileData);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+        if (fileData == null || fileData.length == 0) {
+            return ResponseEntity.notFound().build();
         }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, getContentType(fullPath))
+                .body(fileData);
+
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().build();
     }
+}
 
     private String getContentType(String path) {
         String lower = path.toLowerCase();
