@@ -74,6 +74,7 @@ public CorsConfigurationSource corsConfigurationSource() {
     configuration.setAllowedOriginPatterns(List.of(
             "http://localhost:3000",
             "http://localhost:8080",
+             "https://*.vercel.app",
             "https://*.lovable.app",
             "https://*.lovableproject.com"
     ));
