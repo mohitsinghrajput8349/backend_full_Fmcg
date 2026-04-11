@@ -25,7 +25,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-```
+
 @Autowired
 private CustomUserDetailsService userDetailsService;
 
