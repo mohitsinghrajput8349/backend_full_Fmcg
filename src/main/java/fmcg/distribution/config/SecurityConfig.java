@@ -68,9 +68,9 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://*.vercel.app",
-                "https://*.lovable.app",
-                "https://*.lovableproject.com"
+                "https://.*\\.vercel\\.app",
+                "https://.*\\.lovable\\.app",
+                "https://.*\\.lovableproject\\.com"
         ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
