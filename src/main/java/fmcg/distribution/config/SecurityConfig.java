@@ -58,10 +58,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // ✅ PUBLIC APIs
-                .requestMatchers("/auth/**", "/api/auth/**", "/api/files/**").permitAll()
-                // 🔒 PROTECTED APIs
-                .anyRequest().authenticated()
-            )
+                .authorizeHttpRequests(auth -> auth
+    .requestMatchers("/auth/**", "/files/**").permitAll()  // ← original was correct!
+    .anyRequest().authenticated()
+)
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
