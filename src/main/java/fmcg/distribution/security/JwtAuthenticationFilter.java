@@ -31,7 +31,7 @@ protected void doFilterInternal(HttpServletRequest request,
     String path = request.getRequestURI();
 
     // ✅ SKIP JWT FOR PUBLIC ENDPOINTS
-    if (path.startsWith("/api/auth") || path.startsWith("/api/files")) {
+    if (path.startsWith("/auth") || path.startsWith("/api/files")) {
         chain.doFilter(request, response);
         return;
     }
