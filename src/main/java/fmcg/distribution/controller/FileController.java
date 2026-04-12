@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")
 public class FileController {
 
     @Autowired
