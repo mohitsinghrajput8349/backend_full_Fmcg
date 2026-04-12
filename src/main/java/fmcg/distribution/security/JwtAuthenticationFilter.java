@@ -28,14 +28,15 @@ protected void doFilterInternal(HttpServletRequest request,
                                 FilterChain chain)
         throws ServletException, IOException {
 
-    String path = request.getRequestURI();
+  String path = request.getRequestURI();
 
-    // ✅ SKIP JWT FOR PUBLIC ENDPOINTS
-    if (path.startsWith("/auth") || path.startsWith("/api/files")) {
-        chain.doFilter(request, response);
-        return;
-    }
-
+// ✅ skip JWT for public endpoints + OPTIONS (VERY IMPORTANT)
+if (path.startsWith("/api/auth") || 
+    path.startsWith("/api/files") || 
+    request.getMethod().equals("OPTIONS")) {
+    chain.doFilter(request, response);
+    return;
+}
     final String authorizationHeader = request.getHeader("Authorization");
 
     String email = null;
