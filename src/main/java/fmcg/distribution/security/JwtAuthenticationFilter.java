@@ -35,9 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
-
         // ✅ skip JWT for public endpoints
-        if (path.startsWith("/api/auth") || path.startsWith("/api/files")) {
+        if (path.startsWith("/auth") || path.startsWith("/files")) {
             chain.doFilter(request, response);
             return;
         }
