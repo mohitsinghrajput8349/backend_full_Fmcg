@@ -5,6 +5,7 @@ import fmcg.distribution.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -56,9 +57,13 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // ✅ PUBLIC APIs
-                .requestMatchers("/auth/**", "/api/auth/**", "/api/files/**").permitAll()
-                // 🔒 PROTECTED APIs
+                // ✅ allow preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // ✅ public APIs
+                .requestMatchers("/api/auth/**", "/api/files/**").permitAll()
+
+                // 🔒 secured APIs
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
@@ -71,16 +76,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ CORRECT PATTERNS (NOT regex)
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://*.vercel.app",
-                "https://*.lovable.app",
-                "https://*.lovableproject.com"
+                "https://*.vercel.app"
         ));
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
