@@ -1,46 +1,71 @@
-@Override
-protected void doFilterInternal(HttpServletRequest request,
-                                HttpServletResponse response,
-                                FilterChain chain)
-        throws ServletException, IOException {
+package fmcg.distribution.security;
 
-    String path = request.getRequestURI();
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-    // ✅ Allow CORS preflight
-    if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
-        chain.doFilter(request, response);
-        return;
-    }
+import java.io.IOException;
 
-    // ✅ Skip JWT for public endpoints
-    if (path.startsWith("/api/auth") || path.startsWith("/api/files")) {
-        chain.doFilter(request, response);
-        return;
-    }
+@Component
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    final String authorizationHeader = request.getHeader("Authorization");
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    String email = null;
-    String jwt = null;
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
 
-    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-        jwt = authorizationHeader.substring(7);
-        try {
-            email = jwtUtil.extractUsername(jwt);
-        } catch (Exception e) {
-            logger.error("JWT extraction error: " + e.getMessage());
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
+            throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+
+        // ✅ VERY IMPORTANT: allow OPTIONS (CORS preflight)
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            chain.doFilter(request, response);
+            return;
         }
-    }
 
-    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-        if (jwtUtil.validateToken(jwt, userDetails)) {
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+        // ✅ skip JWT for public endpoints
+        if (path.startsWith("/api/auth") || path.startsWith("/api/files")) {
+            chain.doFilter(request, response);
+            return;
         }
-    }
 
-    chain.doFilter(request, response);
+        final String authorizationHeader = request.getHeader("Authorization");
+
+        String email = null;
+        String jwt = null;
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            jwt = authorizationHeader.substring(7);
+            try {
+                email = jwtUtil.extractUsername(jwt);
+            } catch (Exception e) {
+                logger.error("JWT extraction error: " + e.getMessage());
+            }
+        }
+
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+            if (jwtUtil.validateToken(jwt, userDetails)) {
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+        }
+
+        chain.doFilter(request, response);
+    }
 }
