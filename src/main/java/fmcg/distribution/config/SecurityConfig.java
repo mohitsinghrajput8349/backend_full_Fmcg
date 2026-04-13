@@ -5,7 +5,6 @@ import fmcg.distribution.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -32,13 +31,11 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthFilter;
 
-    // 🔐 Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 🔐 Authentication provider
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -47,57 +44,43 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // 🔐 Authentication manager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // 🔐 Security filter chain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-
-            // ✅ Enable CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // ✅ Stateless (JWT)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Allow preflight requests (VERY IMPORTANT)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Public APIs
-                .requestMatchers("/api/auth/**", "/api/files/**").permitAll()
-
-                // Everything else secured
+                // ✅ PUBLIC APIs
+                .requestMatchers("/auth/**", "/api/auth/**", "/api/files/**").permitAll()
+                // 🔒 PROTECTED APIs
                 .anyRequest().authenticated()
             )
-
-            // ✅ Authentication provider
             .authenticationProvider(authenticationProvider())
-
-            // ✅ JWT filter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // ✅ CORRECT PATTERNS (NOT regex)
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://*.vercel.app"
+                "https://*.vercel.app",
+                "https://*.lovable.app",
+                "https://*.lovableproject.com"
         ));
 
-        configuration.setAllowedMethods(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
