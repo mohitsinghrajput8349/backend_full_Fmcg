@@ -2,6 +2,8 @@ package fmcg.distribution.config;
 
 import fmcg.distribution.security.JwtAuthenticationFilter;
 import fmcg.distribution.security.CustomUserDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +27,8 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
@@ -57,13 +61,14 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // ✅ allow preflight requests
+                // Allow preflight requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ✅ public APIs
-                .requestMatchers("/api/auth/**", "/api/files/**").permitAll()
+                // Public APIs — paths are relative to server.servlet.context-path (/api),
+                // so Spring Security sees /auth/** and /files/** (not /api/auth/**)
+                .requestMatchers("/auth/**", "/files/**").permitAll()
 
-                // 🔒 secured APIs
+                // Secured APIs
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
@@ -76,13 +81,19 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of(
+        // Explicit origins + wildcard pattern for all Vercel preview/production deployments
+        List<String> allowedOrigins = List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "https://*.vercel.app"
-        ));
+                "https://shopflow-distribution.vercel.app",
+                "https://*.vercel.app",
+                "https://*.lovableproject.com",
+                "https://*.lovable.app"
+        );
+        log.info("CORS allowed origin patterns: {}", allowedOrigins);
+        configuration.setAllowedOriginPatterns(allowedOrigins);
 
-        configuration.setAllowedMethods(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(true);
