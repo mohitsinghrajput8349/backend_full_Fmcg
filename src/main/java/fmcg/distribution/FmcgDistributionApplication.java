@@ -17,7 +17,7 @@ public class FmcgDistributionApplication {
         SpringApplication.run(FmcgDistributionApplication.class, args);
     }
 
-    @Bean
+   // @Bean
     CommandLineRunner init(@Autowired UserRepository userRepository, 
                           @Autowired PasswordEncoder passwordEncoder) {
         return args -> {
